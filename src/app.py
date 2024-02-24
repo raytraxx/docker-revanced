@@ -78,7 +78,7 @@ class APP(object):
         -------
             a string that represents the output file name for an APK file.
         """
-        return f"Re-{self.app_name}-{slugify(self.app_version)}-output.apk"
+        return f"/output/Re-{self.app_name}-{slugify(self.app_version)}-output.apk"
 
     def __str__(self: "APP") -> str:
         """Returns the str representation of the app."""
