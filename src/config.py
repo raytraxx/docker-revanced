@@ -18,7 +18,7 @@ class RevancedConfig(object):
 
     def __init__(self: Self, env: Env) -> None:
         self.env = env
-        self.temp_folder_name = "apks"
+        self.temp_folder_name = "/tmp"
         self.temp_folder = Path(self.temp_folder_name)
         self.ci_test = env.bool("CI_TEST", False)
         self.rip_libs_apps: list[str] = []
