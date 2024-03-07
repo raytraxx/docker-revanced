@@ -24,6 +24,8 @@ class ApkMirror(Downloader):
         possible_links = notes_divs.find_all("a")
         for possible_link in possible_links:
             if possible_link.get("href") and "download.php?id=" in possible_link.get("href"):
+                if "forcebaseapk=true" in possible_link.get("href"):
+                    extension = "apk"
                 file_name = f"{app}.{extension}"
                 self._download(APK_MIRROR_BASE_URL + possible_link["href"], file_name)
                 return file_name, APK_MIRROR_BASE_URL + possible_link["href"]

@@ -10,6 +10,7 @@ RUN python -m pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 RUN mkdir /output
+COPY keystore/revanced.keystore /revanced.keystore
 
 # Copy application code
 COPY . ${APP_HOME}

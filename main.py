@@ -31,7 +31,7 @@ def main() -> None:
         check_java()
         delete_old_changelog()
 
-    if env.str("REDDIT_CLIENT_ID") is not None:
+    if env.str("REDDIT_CLIENT_ID", None) is not None:
         options = [
             {
                 "patchName": "Spoof client",
