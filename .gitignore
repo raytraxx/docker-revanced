@@ -1,6 +1,5 @@
 *.apk
 *.jar
-*.keystore
 *venv
 *.pyc
 **cache**
