@@ -1,5 +1,5 @@
 """Entry point."""
-
+import json
 import sys
 
 from environs import Env
@@ -30,6 +30,22 @@ def main() -> None:
     if not config.dry_run:
         check_java()
         delete_old_changelog()
+
+    if env.str("REDDIT_CLIENT_ID") is not None:
+        options = [
+            {
+                "patchName": "Spoof client",
+                "options": [
+                    {
+                        "key": "client-id",
+                        "value": env.str("REDDIT_CLIENT_ID"),
+                    }
+                ]
+            }
+        ]
+
+        with open("/tmp/options.json", "w") as file:
+            file.write(json.dumps(options))
 
     logger.info(f"Will Patch only {config.apps}")
     for possible_app in config.apps:
