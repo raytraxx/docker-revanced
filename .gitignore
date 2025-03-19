@@ -1,5 +1,6 @@
 *.apk
 *.jar
+*.keystore
 *venv
 *.pyc
 **cache**
@@ -8,4 +9,6 @@ changelog.md
 *.json
 status.md
 *.zip
+apks/*
+*.rvp
 output

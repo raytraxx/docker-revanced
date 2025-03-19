@@ -13,6 +13,7 @@ from src.downloader.sources import (
     APK_PURE_BASE_URL,
     APKS_SOS_BASE_URL,
     GITHUB_BASE_URL,
+    UPTODOWN_SUFFIX,
 )
 from src.downloader.uptodown import UptoDown
 from src.exceptions import DownloadError
@@ -36,7 +37,7 @@ class DownloaderFactory(object):
             return ApkPure(config)
         if apk_source.startswith(APKS_SOS_BASE_URL):
             return ApkSos(config)
-        if apk_source.endswith("en.uptodown.com/android"):
+        if apk_source.endswith(UPTODOWN_SUFFIX):
             return UptoDown(config)
         if apk_source.startswith(APK_MIRROR_BASE_URL):
             return ApkMirror(config)

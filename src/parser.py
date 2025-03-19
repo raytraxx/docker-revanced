@@ -1,6 +1,5 @@
 """Revanced Parser."""
 
-from pathlib import Path
 from subprocess import PIPE, Popen
 from time import perf_counter
 from typing import Self
@@ -15,6 +14,16 @@ from src.utils import possible_archs
 
 
 class Parser(object):
+    """Revanced Parser."""
+
+    CLI_JAR = "-jar"
+    APK_ARG = "-a"
+    NEW_APK_ARG = "patch"
+    PATCHES_ARG = "-p"
+    OUTPUT_ARG = "-o"
+    KEYSTORE_ARG = "--keystore"
+    OPTIONS_ARG = "--legacy-options"
+
     def __init__(self: Self, patcher: Patches, config: RevancedConfig) -> None:
         self._PATCHES: list[str] = []
         self._EXCLUDED: list[str] = []
@@ -22,14 +31,15 @@ class Parser(object):
         self.config = config
 
     def include(self: Self, name: str) -> None:
-        """The function `include` adds a given patch to a list of patches.
+        """
+        The function `include` adds a given patch to the front of a list of patches.
 
         Parameters
         ----------
         name : str
             The `name` parameter is a string that represents the name of the patch to be included.
         """
-        self._PATCHES.extend(["-i", name])
+        self._PATCHES[:0] = ["-e", name]
 
     def exclude(self: Self, name: str) -> None:
         """The `exclude` function adds a given patch to the list of excluded patches.
@@ -39,7 +49,7 @@ class Parser(object):
         name : str
             The `name` parameter is a string that represents the name of the patch to be excluded.
         """
-        self._PATCHES.extend(["-e", name])
+        self._PATCHES.extend(["-d", name])
         self._EXCLUDED.append(name)
 
     def get_excluded_patches(self: Self) -> list[str]:
@@ -75,11 +85,10 @@ class Parser(object):
         """
         try:
             name = name.lower().replace(" ", "-")
-            patch_index = self._PATCHES.index(name)
             indices = [i for i in range(len(self._PATCHES)) if self._PATCHES[i] == name]
             for patch_index in indices:
                 if self._PATCHES[patch_index - 1] == "-e":
-                    self._PATCHES[patch_index - 1] = "-i"
+                    self._PATCHES[patch_index - 1] = "-d"
                 else:
                     self._PATCHES[patch_index - 1] = "-e"
         except ValueError:
@@ -90,8 +99,10 @@ class Parser(object):
     def exclude_all_patches(self: Self) -> None:
         """The function `exclude_all_patches` exclude all the patches."""
         for idx, item in enumerate(self._PATCHES):
-            if item == "-i":
-                self._PATCHES[idx] = "-e"
+            if idx == 0:
+                continue
+            if item == "-e":
+                self._PATCHES[idx] = "-d"
 
     def include_exclude_patch(
         self: Self,
@@ -125,7 +136,11 @@ class Parser(object):
             for patch in patches_dict["universal_patch"]:
                 self.include(patch["name"]) if patch["name"] in app.include_request else ()
 
-    def patch_app(self: Self, app: APP) -> None:
+    # noinspection IncorrectFormatting
+    def patch_app(
+        self: Self,
+        app: APP,
+    ) -> None:
         """The function `patch_app` is used to patch an app using the Revanced CLI tool.
 
         Parameters
@@ -134,21 +149,32 @@ class Parser(object):
             The `app` parameter is an instance of the `APP` class. It represents an application that needs
         to be patched.
         """
+        apk_arg = self.NEW_APK_ARG
+        exp = "--force"
         args = [
-            '-jar', self.config.temp_folder.joinpath(app.resource["cli"]),
-            'patch', self.config.temp_folder.joinpath(app.download_file_name),
-            '-b', self.config.temp_folder.joinpath(app.resource["patches"]),
-            '-m', self.config.temp_folder.joinpath(app.resource["integrations"]),
-            '-o', self.config.temp_folder.joinpath(app.get_output_file_name()),
-            '--keystore', '/revanced.keystore',
-            #'--alias', 'ReVanced Key',
-            #'--keystore-entry-password', 'ReVanced',
-            #'--keystore-password', 'ReVanced',
-            '--options', self.config.temp_folder.joinpath('options.json'),
+            self.CLI_JAR,
+            app.resource["cli"]["file_name"],
+            apk_arg,
+            app.download_file_name,
+            self.PATCHES_ARG,
+            app.resource["patches"]["file_name"],
+            self.OUTPUT_ARG,
+            app.get_output_file_name(),
+            self.KEYSTORE_ARG,
+            app.keystore_name,
+            self.OPTIONS_ARG,
+            app.options_file,
         ]
-        if app.experiment:
-            logger.debug("Using experimental features")
-            args.append('--force')
+        args.append(exp)
+        args[1::2] = map(self.config.temp_folder.joinpath, args[1::2])
+        if app.old_key:
+            # https://github.com/ReVanced/revanced-cli/issues/272#issuecomment-1740587534
+            old_key_flags = [
+                "--keystore-entry-alias=alias",
+                "--keystore-entry-password=ReVanced",
+                "--keystore-password=ReVanced",
+            ]
+            args.extend(old_key_flags)
         if self.config.ci_test:
             self.exclude_all_patches()
         if self._PATCHES:
